@@ -68,7 +68,7 @@ function Maps() {
         setUserLocation(pos);
         setLoading(false); 
         if (originRef.current) {
-          originRef.current.value = { lat: pos.lat, lng: pos.lng };
+          originRef.current.value = 'Your Current Location';
         }
         if (map) {
           map.panTo(pos);
@@ -114,7 +114,10 @@ useEffect(()=>{
 
 
   async function calculateRoute(destination, travelMode, isEditing = false, index = null) {
-    const origin = originRef.current?.value ;
+    const originInputValue = originRef.current?.value;
+    const origin = (!originInputValue || originInputValue === 'Your Current Location') && userLocation
+      ? userLocation
+      : originInputValue || center;
      
     if (!destination) return;
 
