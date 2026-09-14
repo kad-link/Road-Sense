@@ -1,69 +1,70 @@
 import React from 'react';
-import { MapPin, Navigation, Clock, Calendar } from 'lucide-react';
-import Badge from './Badge';
-
+import { MapPin, Navigation, Clock, Calendar, ArrowRight } from 'lucide-react';
 
 function InfoCard(props) {
   return (
-    <div className="bg-gray-50 w-full max-w-md mx-auto rounded-3xl shadow-lg p-8 border border-gray-200">
-      
-      <div className="mb-8">
-        <Badge>Road Trip</Badge>
+    <div className="bg-zinc-900/80 hover:bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-2xl p-6 shadow-xl transition-all duration-300 flex flex-col justify-between">
+      <div>
+        {/* Card Header Tag */}
+        <div className="flex items-center justify-between mb-5">
+          <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-zinc-950 border border-zinc-800 text-zinc-300 font-mono">
+            Verified Route
+          </span>
+          <span className="text-xs text-zinc-500 font-mono flex items-center gap-1.5">
+            <Calendar className="w-3.5 h-3.5 text-zinc-500" />
+            {props.date}
+          </span>
+        </div>
+
+        {/* Route Origin & Destination */}
+        <div className="space-y-4 relative pl-7">
+          {/* Vertical route line */}
+          <div className="absolute left-2.5 top-3 bottom-3 w-0.5 bg-zinc-800" />
+
+          {/* Origin */}
+          <div className="relative">
+            <div className="absolute -left-7 top-1 w-5 h-5 rounded-full bg-zinc-950 border border-emerald-500 flex items-center justify-center">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            </div>
+            <div>
+              <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-mono block">Departure</span>
+              <p className="text-base font-medium text-white truncate max-w-[280px]">
+                {props.source}
+              </p>
+            </div>
+          </div>
+
+          {/* Destination */}
+          <div className="relative">
+            <div className="absolute -left-7 top-1 w-5 h-5 rounded-full bg-zinc-950 border border-rose-500 flex items-center justify-center">
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+            </div>
+            <div>
+              <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-mono block">Destination</span>
+              <p className="text-base font-medium text-white truncate max-w-[280px]">
+                {props.destination}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="flex items-start gap-4 mb-6">
-        <div className="flex-shrink-0 mt-1">
-          <div className="w-10 h-10 rounded-full border-2 border-black flex items-center justify-center">
-            <MapPin className="w-5 h-5 text-black" />
-          </div>
-        </div>
-        <div>
-          <p className="text-gray-500 text-sm mb-1">From</p>
-          <p className="text-2xl font-semibold text-black">{props.source}</p>
-        </div>
-      </div>
-
-      <div className="flex justify-center my-4">
-        <Navigation className="w-6 h-6 text-gray-400 rotate-180" />
-      </div>
-
-      <div className="flex items-start gap-4 mb-8">
-        <div className="flex-shrink-0 mt-1">
-          <div className="w-10 h-10 rounded-full border-2 border-black flex items-center justify-center">
-            <MapPin className="w-5 h-5 text-black" />
-          </div>
-        </div>
-        <div>
-          <p className="text-gray-500 text-sm mb-1">To</p>
-          <p className="text-2xl font-semibold text-black">{props.destination}</p>
-        </div>
-      </div>
-
-      <div className="border-t border-gray-300 my-8"></div>
-
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Navigation className="w-5 h-5 text-gray-500" />
-            <span className="text-gray-600 text-base">Distance</span>
-          </div>
-          <span className="text-xl font-semibold text-black">{props.distance}</span>
+      {/* Metrics Row */}
+      <div className="mt-6 pt-4 border-t border-zinc-800 grid grid-cols-2 gap-4 font-mono text-xs">
+        <div className="bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/80">
+          <span className="text-[10px] text-zinc-500 block uppercase">Distance</span>
+          <span className="text-sm font-semibold text-zinc-100 flex items-center gap-1.5 mt-0.5">
+            <Navigation className="w-3.5 h-3.5 text-zinc-400" />
+            {props.distance}
+          </span>
         </div>
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Clock className="w-5 h-5 text-gray-500" />
-            <span className="text-gray-600 text-base">Duration</span>
-          </div>
-          <span className="text-xl font-semibold text-black">{props.duration}</span>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Calendar className="w-5 h-5 text-gray-500" />
-            <span className="text-gray-600 text-base">Date</span>
-          </div>
-          <span className="text-xl font-semibold text-black">{props.date}</span>
+        <div className="bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/80">
+          <span className="text-[10px] text-zinc-500 block uppercase">Duration</span>
+          <span className="text-sm font-semibold text-zinc-100 flex items-center gap-1.5 mt-0.5">
+            <Clock className="w-3.5 h-3.5 text-zinc-400" />
+            {props.duration}
+          </span>
         </div>
       </div>
     </div>

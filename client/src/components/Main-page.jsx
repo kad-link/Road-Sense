@@ -1,38 +1,74 @@
-import React from 'react'
+import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from "../context/AuthContext"; 
+import { Shield, ArrowRight, Eye, MapPin, FileText } from 'lucide-react';
 
 function MainPage() {
-  const {user} = useAuth();
+  const { user } = useAuth();
   
   return (
-    <div className='main-page w-full bg-transparent min-h-[calc(100vh-15vh)] flex items-center justify-center px-4'>
-        <div className='flex flex-col items-center max-w-5xl mx-auto'>
-            <div className='caption text-white text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-center tracking-tighter font-light'>
-                THE SMARTER WAY TO DRIVE
-            </div>
-            <div className='nutshell text-white text-base sm:text-lg md:text-xl lg:text-2xl text-center tracking-tight font-extralight mt-10 md:mt-20 w-full md:w-4/5 px-4'>
-              Stay alert, stay safe — RoadSense uses AI to detect driver fatigue, monitor seatbelts, and keep your vehicle documents organized, all while guiding you through intelligent maps
-            </div>
-            
-            <button 
-              className="relative overflow-hidden text-white text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter mt-8 md:mt-12 cursor-pointer border-2 border-white px-6 py-1 rounded-md
-              before:absolute before:inset-0 before:bg-white before:translate-x-[-100%] before:transition-transform before:duration-500 before:ease-out
-              hover:before:translate-x-0 hover:text-black transition-all hover:scale-105"
-              >
-                {user ? (
-                  <a href='#services'>
-                    <span className="relative z-10">Explore ▼</span>
-                  </a>
-                ):(
-                  <NavLink to="/register">
-                    <span className="relative z-10">Get Started →</span>
-                  </NavLink>
-                )}
-            </button>
+    <div className="w-full min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
+      <div className="flex flex-col items-center max-w-4xl mx-auto text-center">
+        
+        {/* Badge */}
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-900/80 border border-zinc-700/80 text-zinc-300 text-xs font-medium tracking-wide mb-6 backdrop-blur-md">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span>Intelligent Driver Attention & Telematics System</span>
         </div>
+
+        {/* Title */}
+        <h1 className="text-4xl sm:text-6xl lg:text-7xl font-light tracking-tighter text-white leading-none">
+          THE SMARTER WAY <br className="hidden sm:block" />
+          <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-zinc-100 via-zinc-300 to-zinc-500">
+            TO STAY SAFE ON ROAD
+          </span>
+        </h1>
+
+        {/* Subtitle */}
+        <p className="text-zinc-400 text-base sm:text-lg lg:text-xl font-normal mt-6 max-w-2xl leading-relaxed">
+          Monitor driver fatigue in real time, record detailed route telematics, and access your digital vehicle glovebox anywhere — engineered for safe, stress-free journeys.
+        </p>
+
+        {/* CTAs */}
+        <div className="flex flex-col sm:flex-row items-center gap-3.5 mt-8 w-full sm:w-auto">
+          <NavLink to="/safety" className="w-full sm:w-auto">
+            <button className="w-full sm:w-auto px-7 py-3 rounded-xl text-xs font-semibold uppercase tracking-wider bg-zinc-100 hover:bg-white text-zinc-950 transition-all shadow-xl flex items-center justify-center gap-2 cursor-pointer hover:scale-105">
+              <span>Launch Safety Console</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </NavLink>
+
+          <a href="#services" className="w-full sm:w-auto">
+            <button className="w-full sm:w-auto px-6 py-3 rounded-xl text-xs font-semibold uppercase tracking-wider bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-white transition-all cursor-pointer">
+              Explore Capabilities
+            </button>
+          </a>
+        </div>
+
+        {/* Telematics Feature Highlights */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mt-12 sm:mt-16 w-full max-w-2xl text-left font-mono">
+          <div className="p-3 rounded-xl bg-zinc-950/60 border border-zinc-800/80 backdrop-blur-md">
+            <Eye className="w-4 h-4 text-zinc-400 mb-1.5" />
+            <div className="text-xs font-bold text-zinc-200">Vision Tracking</div>
+            <div className="text-[10px] text-zinc-500">Sub-second eye closure detection</div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-zinc-950/60 border border-zinc-800/80 backdrop-blur-md">
+            <MapPin className="w-4 h-4 text-zinc-400 mb-1.5" />
+            <div className="text-xs font-bold text-zinc-200">Trip Telematics</div>
+            <div className="text-[10px] text-zinc-500">Automated route & duration logs</div>
+          </div>
+
+          <div className="col-span-2 sm:col-span-1 p-3 rounded-xl bg-zinc-950/60 border border-zinc-800/80 backdrop-blur-md">
+            <FileText className="w-4 h-4 text-zinc-400 mb-1.5" />
+            <div className="text-xs font-bold text-zinc-200">Digital Glovebox</div>
+            <div className="text-[10px] text-zinc-500">Secure vehicle paper vault</div>
+          </div>
+        </div>
+
+      </div>
     </div>
-  )
+  );
 }
 
-export default MainPage
+export default MainPage;

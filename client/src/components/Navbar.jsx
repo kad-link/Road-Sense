@@ -1,12 +1,27 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { 
+  Shield, 
+  Compass, 
+  FileText, 
+  Map, 
+  User, 
+  LayoutDashboard, 
+  Settings as SettingsIcon, 
+  LogOut, 
+  ChevronDown,
+  Menu,
+  X
+} from 'lucide-react';
 
 function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -21,117 +36,230 @@ function Navbar() {
   const handleLogout = () => {
     logout();
     setShowDropdown(false);
+    setMobileMenuOpen(false);
     navigate('/');
   };
 
+  const navLinks = [
+    { name: 'Safety', path: '/safety' },
+    { name: 'Trips', path: '/trips' },
+    { name: 'Documents', path: '/docs' },
+    { name: 'Navigate', path: '/nav-maps' },
+    { name: 'About', path: '/about' },
+    { name: 'Contact', path: '/contact' },
+  ];
+
   return (
     <>
-      <div className="navbar fixed top-0 left-0 w-full h-[15vh] bg-gray-900/90 border-b-2 border-gray-700 z-50">
-        <div className="flex items-center justify-between px-9 h-full">
+      <header className="fixed top-0 left-0 w-full h-16 bg-zinc-950/85 backdrop-blur-md border-b border-zinc-800/80 z-50 transition-all">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
           
-          <div className="title font-bold text-4xl sm:text-5xl md:text-6xl tracking-tighter text-white">
-            ROADSENSE
-          </div>
-
-          <div className="text-white font-bold text-lg sm:text-xl flex flex-row gap-10 sm:gap-20">
-            <a
-              href="#services"
-              className="relative after:content-[''] after:absolute after:w-0 after:h-[2px] after:left-0 after:-bottom-1 after:bg-white after:transition-all after:duration-300 hover:after:w-full"
-            >
-              Services
-            </a>
-            <NavLink
-              to="/about"
-              className="relative after:content-[''] after:absolute after:w-0 after:h-[2px] after:left-0 after:-bottom-1 after:bg-white after:transition-all after:duration-300 hover:after:w-full"
-            >
-              About
-            </NavLink>
-            <NavLink
-              to="/contact"
-              className="relative after:content-[''] after:absolute after:w-0 after:h-[2px] after:left-0 after:-bottom-1 after:bg-white after:transition-all after:duration-300 hover:after:w-full"
-            >
-              Contact
-            </NavLink>
-          </div>
-
-          {!isAuthenticated ? (
-            <div className="flex flex-row gap-6">
-              <NavLink to="/register">
-                <button className="bg-white text-black px-3 py-1 rounded-sm font-black cursor-pointer hover:bg-black hover:text-white transition-colors duration-300 ease-in-out">
-                  REGISTER
-                </button>
-              </NavLink>
-              <NavLink to="/login">
-                <button className="bg-black text-white px-3 py-1 rounded-sm font-black cursor-pointer hover:bg-white hover:text-black transition-colors duration-300 ease-in-out">
-                  LOGIN
-                </button>
-              </NavLink>
+          {/* Logo */}
+          <NavLink to="/" className="flex items-center gap-2.5 group">
+            <div className="w-8 h-8 rounded-lg bg-zinc-100 text-zinc-950 font-black text-sm font-mono flex items-center justify-center shadow group-hover:bg-white transition-colors">
+              RS
             </div>
-          ) : (
-            <div className="relative" ref={dropdownRef}>
-              <div
-                className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-black font-bold text-xl cursor-pointer hover:scale-105 transition-transform duration-200 shadow-lg"
-                onClick={() => setShowDropdown(!showDropdown)}
+            <span className="font-semibold text-lg tracking-tight text-white group-hover:text-zinc-200 transition-colors">
+              ROADSENSE
+            </span>
+          </NavLink>
+
+          {/* Desktop Nav Items */}
+          <nav className="hidden md:flex items-center gap-1 text-xs font-medium text-zinc-400">
+            {location.pathname === '/' && (
+              <a
+                href="#services"
+                className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-zinc-900/60 transition-colors"
               >
-                {user?.fullName?.charAt(0).toUpperCase() || 'U'}
+                Services
+              </a>
+            )}
+            {navLinks.map((link) => (
+              <NavLink
+                key={link.path}
+                to={link.path}
+                className={({ isActive }) =>
+                  `px-3 py-1.5 rounded-lg transition-colors ${
+                    isActive
+                      ? 'text-white bg-zinc-900 font-semibold border border-zinc-800'
+                      : 'hover:text-white hover:bg-zinc-900/60'
+                  }`
+                }
+              >
+                {link.name}
+              </NavLink>
+            ))}
+          </nav>
+
+          {/* Right Action / Auth */}
+          <div className="hidden sm:flex items-center gap-3">
+            {!isAuthenticated ? (
+              <div className="flex items-center gap-2">
+                <NavLink to="/login">
+                  <button className="px-3.5 py-1.5 rounded-lg text-xs font-medium text-zinc-300 hover:text-white hover:bg-zinc-900 transition-all cursor-pointer">
+                    Sign In
+                  </button>
+                </NavLink>
+                <NavLink to="/register">
+                  <button className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-zinc-100 hover:bg-white text-zinc-950 transition-all shadow-sm cursor-pointer">
+                    Get Started
+                  </button>
+                </NavLink>
               </div>
-
-              {showDropdown && (
-                <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-2xl overflow-hidden animate-slideDown">
-                  <div className="px-4 py-3 bg-white text-black">
-                    <p className="font-bold text-lg">{user?.fullName}</p>
-                    <p className="text-sm opacity-90">{user?.email}</p>
-                    {user?.carModel && (
-                      <p className="text-xs opacity-80 mt-1"> {user?.carModel}</p>
-                    )}
+            ) : (
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setShowDropdown(!showDropdown)}
+                  className="flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-zinc-900 transition-colors border border-transparent hover:border-zinc-800 cursor-pointer"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-zinc-800 border border-zinc-700 text-zinc-200 font-semibold text-xs flex items-center justify-center">
+                    {user?.fullName?.charAt(0).toUpperCase() || 'U'}
                   </div>
-
-                  <div className="py-2">
-                    <button
-                      className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 transition-colors duration-200"
-                      onClick={() => {
-                        setShowDropdown(false);
-                        navigate('/profile');
-                      }}
-                    >
-                      Profile
-                    </button>
-                    <button
-                      className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 transition-colors duration-200"
-                      onClick={() => {
-                        setShowDropdown(false);
-                        navigate('/dashboard');
-                      }}
-                    >
-                      Dashboard
-                    </button>
-                    <button
-                      className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 transition-colors duration-200"
-                      onClick={() => {
-                        setShowDropdown(false);
-                        navigate('/settings');
-                      }}
-                    >
-                      Settings
-                    </button>
+                  <div className="text-left hidden lg:block">
+                    <p className="text-xs font-medium text-zinc-200 leading-none">
+                      {user?.fullName || 'Driver'}
+                    </p>
+                    <p className="text-[10px] text-zinc-500 truncate max-w-[120px] mt-0.5">
+                      {user?.email}
+                    </p>
                   </div>
+                  <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+                </button>
 
-                  <div className="border-t border-gray-200">
-                    <button
-                      className="w-full px-4 py-3 text-left cursor-pointer text-red-600 hover:bg-red-500 hover:text-black font-semibold transition-colors duration-200"
-                      onClick={handleLogout}
-                    >
-                      Logout
-                    </button>
+                {showDropdown && (
+                  <div className="absolute right-0 mt-2 w-56 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl py-2 z-50 text-xs backdrop-blur-xl animate-in fade-in slide-in-from-top-2 duration-150">
+                    <div className="px-4 py-2.5 border-b border-zinc-800">
+                      <p className="font-semibold text-white truncate">{user?.fullName}</p>
+                      <p className="text-zinc-500 text-[11px] truncate">{user?.email}</p>
+                      {user?.carModel && (
+                        <span className="inline-block mt-1 px-2 py-0.5 rounded bg-zinc-800 text-[10px] text-zinc-400 font-mono">
+                          {user?.carModel}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="py-1">
+                      <button
+                        onClick={() => {
+                          setShowDropdown(false);
+                          navigate('/dashboard');
+                        }}
+                        className="w-full px-4 py-2 text-left text-zinc-300 hover:text-white hover:bg-zinc-800/80 flex items-center gap-2.5 transition-colors cursor-pointer"
+                      >
+                        <LayoutDashboard className="w-4 h-4 text-zinc-400" />
+                        <span>Dashboard</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowDropdown(false);
+                          navigate('/profile');
+                        }}
+                        className="w-full px-4 py-2 text-left text-zinc-300 hover:text-white hover:bg-zinc-800/80 flex items-center gap-2.5 transition-colors cursor-pointer"
+                      >
+                        <User className="w-4 h-4 text-zinc-400" />
+                        <span>Driver Profile</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowDropdown(false);
+                          navigate('/settings');
+                        }}
+                        className="w-full px-4 py-2 text-left text-zinc-300 hover:text-white hover:bg-zinc-800/80 flex items-center gap-2.5 transition-colors cursor-pointer"
+                      >
+                        <SettingsIcon className="w-4 h-4 text-zinc-400" />
+                        <span>Settings</span>
+                      </button>
+                    </div>
+
+                    <div className="border-t border-zinc-800 pt-1">
+                      <button
+                        onClick={handleLogout}
+                        className="w-full px-4 py-2 text-left text-rose-400 hover:text-rose-300 hover:bg-rose-950/30 flex items-center gap-2.5 transition-colors cursor-pointer"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>Sign Out</span>
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          )}
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Mobile Menu Toggle */}
+          <div className="flex md:hidden items-center gap-2">
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
-      </div>
 
-      <div className="h-[15vh]"></div>
+        {/* Mobile Dropdown Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-zinc-950 border-b border-zinc-800 px-4 pt-2 pb-6 space-y-2">
+            {navLinks.map((link) => (
+              <NavLink
+                key={link.path}
+                to={link.path}
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-lg text-sm text-zinc-300 hover:text-white hover:bg-zinc-900"
+              >
+                {link.name}
+              </NavLink>
+            ))}
+            {!isAuthenticated ? (
+              <div className="pt-4 border-t border-zinc-800 flex flex-col gap-2">
+                <NavLink to="/login" onClick={() => setMobileMenuOpen(false)}>
+                  <button className="w-full py-2 rounded-lg text-xs font-medium text-zinc-300 bg-zinc-900">
+                    Sign In
+                  </button>
+                </NavLink>
+                <NavLink to="/register" onClick={() => setMobileMenuOpen(false)}>
+                  <button className="w-full py-2 rounded-lg text-xs font-semibold bg-white text-zinc-950">
+                    Get Started
+                  </button>
+                </NavLink>
+              </div>
+            ) : (
+              <div className="pt-4 border-t border-zinc-800 space-y-2">
+                <NavLink
+                  to="/dashboard"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-3 py-2 text-sm text-zinc-300"
+                >
+                  Dashboard
+                </NavLink>
+                <NavLink
+                  to="/profile"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-3 py-2 text-sm text-zinc-300"
+                >
+                  Profile
+                </NavLink>
+                <NavLink
+                  to="/settings"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-3 py-2 text-sm text-zinc-300"
+                >
+                  Settings
+                </NavLink>
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left px-3 py-2 text-sm text-rose-400"
+                >
+                  Sign Out
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </header>
+
+      {/* Spacer for sticky header */}
+      <div className="h-16" />
     </>
   );
 }
