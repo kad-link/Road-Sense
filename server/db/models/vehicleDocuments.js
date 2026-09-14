@@ -6,7 +6,6 @@ const documentSchema = new mongoose.Schema(
         fileName: {
             type:String,
             required: true,
-            unique:true,
         },
         date: {
             type:String,
@@ -23,6 +22,10 @@ const documentSchema = new mongoose.Schema(
         fileURL: {
             type:String,
             required:true,
+        },
+        cloudinaryPublicId: {
+            type:String,
+            required:false,
         },
         user:{
             type:mongoose.Schema.Types.ObjectId,

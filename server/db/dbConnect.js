@@ -7,8 +7,8 @@ const connectDB = async()=>{
         console.log(`MongoDB connected ...`);
         console.log(`DB HOST: ${connectionInstance.connection.host}`)
     } catch (error) {
-        console.log(`MongoDB connection error: `, error);
-        process.exit(1)
+        console.warn(`⚠️ MongoDB connection error: `, error.message || error);
+        console.warn("⚠️ Continuing server execution without MongoDB. Database operations will fail.");
     }
 }
 

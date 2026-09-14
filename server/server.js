@@ -9,7 +9,8 @@ import jwt from "jsonwebtoken";
 import { Trip } from "./db/models/trips.js";
 import { UserDocs } from "./db/models/vehicleDocuments.js";
 import { Score } from "./db/models/score.js";
-import upload from "./middleware/multer.js"
+import upload from "./middleware/multer.js";
+import cloudinary from "./config/cloudinary.js";
 import { Resend } from 'resend';
 import { authMiddleware } from "./middleware/auth.js";
 import admin from "firebase-admin";
@@ -18,18 +19,34 @@ const app = express();
 
 import cors from "cors";
 
-admin.initializeApp({
-  credential: admin.credential.cert({
-    projectId: process.env.FIREBASE_PROJECT_ID,
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n') 
-  })
-});
+if (
+  process.env.FIREBASE_PROJECT_ID &&
+  process.env.FIREBASE_CLIENT_EMAIL &&
+  process.env.FIREBASE_PRIVATE_KEY &&
+  process.env.FIREBASE_PRIVATE_KEY.includes("-----BEGIN PRIVATE KEY-----")
+) {
+  try {
+    admin.initializeApp({
+      credential: admin.credential.cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n') 
+      })
+    });
+    console.log("🔥 Firebase Admin initialized successfully.");
+  } catch (err) {
+    console.warn("⚠️ Failed to initialize Firebase Admin:", err.message);
+  }
+} else {
+  console.warn("⚠️ Firebase credentials missing or invalid in .env. Google Login will be disabled.");
+}
+
 
 
 app.use(cors({
-  origin: 'http://localhost:5173',
-  methods: ['GET', 'POST'],
+  origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
 
@@ -253,80 +270,80 @@ app.get("/trip/:email", async(req,res)=>{
   }
 })
 
-app.post("/docs/:email", authMiddleware,upload.single("file"), async(req,res)=>{
-  try{
-
-  
-
-    const {email} = req.params;
+app.post("/docs/:email", authMiddleware, (req, res, next) => {
+  upload.single("file")(req, res, (err) => {
+    if (err) {
+      console.error("Multer / Cloudinary upload error: ", err);
+      return res.status(400).json({
+        success: false,
+        message: err.message || "File upload failed. Allowed formats: JPG, JPEG, PNG, PDF (Max 10MB)."
+      });
+    }
+    next();
+  });
+}, async (req, res) => {
+  try {
+    const { email } = req.params;
     const { fileDescription } = req.body;
 
-    const isUser= await User.findOne({email});
+    const isUser = await User.findOne({ email });
 
-    if(!isUser){
-    return res.status(404).json({
-      success: false,
-      message: "User not found",
-    })
-  }
+    if (!isUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
 
-  if(!req.file){
-    return res.status(400).json({
-      success:false,
-      message:"No file uploaded",
-    })
-  }
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "No file uploaded",
+      });
+    }
 
-  if(!fileDescription){
-    return res.status(400).json({
-      success: false,
-      message: "File Description is required"
-    })
-  }
-  const fileURL = req.file.path; 
-  const originalName = req.file.originalname;
-  const fileSize= req.file.size;
+    if (!fileDescription) {
+      return res.status(400).json({
+        success: false,
+        message: "File Description is required"
+      });
+    }
 
-  const formatFileSize = (bytes) => {
-        if (bytes < 1024) return bytes + ' B';
-        else if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-        else return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-      };
+    const fileURL = req.file.path; 
+    const originalName = req.file.originalname;
+    const fileSize = req.file.size;
+    const cloudinaryPublicId = req.file.filename;
 
-    
+    const formatFileSize = (bytes) => {
+      if (bytes < 1024) return bytes + ' B';
+      else if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      else return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    };
 
-  console.log("Uploaded File info: ", req.file);
-  console.log("User email: ", req.params.email);
-  console.log("File description: ", req.body.fileDescription);
+    const myDate = new Date();
+    const formattedDate = myDate.toLocaleDateString('en-GB');
 
-  const myDate = new Date();
-  const formattedDate = myDate.toLocaleDateString('en-GB');
+    const newDoc = new UserDocs({
+      fileName: originalName,
+      date: formattedDate,
+      fileSize: formatFileSize(fileSize),
+      fileDescription,
+      fileURL,
+      cloudinaryPublicId,
+      user: isUser._id,
+    });
 
-  const newDoc = new UserDocs({
-    fileName: originalName,
-    date: formattedDate,
-    fileSize: formatFileSize(fileSize),
-    fileDescription,
-    fileURL,
-    user: isUser._id,
-  })
+    await newDoc.save();
 
-  await newDoc.save();
+    return res.status(200).json({
+      success: true,
+      message: "File upload successful",
+      document: newDoc
+    });
 
-
-  return res.status(200).json({
-    success:true,
-    message: "File upload successful"
-  })
-  
-
-  }
-  catch(error){
-
- 
-
+  } catch (error) {
     console.error("File uploading error: ", error);
-      if (error.code === 11000) {
+    if (error.code === 11000) {
       return res.status(400).json({
         success: false,
         message: "A file with this name already exists",
@@ -338,9 +355,64 @@ app.post("/docs/:email", authMiddleware,upload.single("file"), async(req,res)=>{
       message: "File upload failed",
       error: error.message
     });
-
   }
-})
+});
+
+// Delete vehicle document from Cloudinary and MongoDB
+app.delete("/docs/:id", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const doc = await UserDocs.findById(id);
+    if (!doc) {
+      return res.status(404).json({
+        success: false,
+        message: "Document not found"
+      });
+    }
+
+    // Verify ownership
+    if (doc.user.toString() !== req.user.userId) {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized: You cannot delete documents belonging to another driver"
+      });
+    }
+
+    // Extract Cloudinary public ID
+    let publicId = doc.cloudinaryPublicId;
+    if (!publicId && doc.fileURL) {
+      const match = doc.fileURL.match(/\/upload\/(?:v\d+\/)?(.+)\.[a-zA-Z0-9]+$/);
+      if (match) publicId = match[1];
+    }
+
+    if (publicId) {
+      try {
+        const cloudRes = await cloudinary.uploader.destroy(publicId);
+        if (cloudRes && cloudRes.result !== 'ok') {
+          // Attempt destruction with raw resource type (common for non-standard files/PDFs)
+          await cloudinary.uploader.destroy(publicId, { resource_type: 'raw' });
+        }
+      } catch (cloudErr) {
+        console.warn("Cloudinary asset deletion note:", cloudErr.message);
+      }
+    }
+
+    await UserDocs.findByIdAndDelete(id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Document deleted successfully"
+    });
+  } catch (error) {
+    console.error("Document deletion failed:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete document",
+      error: error.message
+    });
+  }
+});
 
 
 app.get("/docs/:email", async(req,res)=>{
@@ -574,6 +646,12 @@ app.post("/Glogin", async(req,res)=>{
   const { token} = req.body;
 
   try {
+    if (admin.apps.length === 0) {
+      return res.status(503).json({
+        success: false,
+        message: "Google login is currently unavailable (Firebase not configured)."
+      });
+    }
     const decoded = await admin.auth().verifyIdToken(token);
 
     let user = await User.findOne({ email: decoded.email });
@@ -581,10 +659,10 @@ app.post("/Glogin", async(req,res)=>{
     if (!user) {
       user = await User.create({
         email: decoded.email,
-        fullName: decoded.name,
+        fullName: decoded.name || decoded.email.split('@')[0],
         authProvider: "google",
         googleUID: decoded.uid,
-        profilePic: decoded.picture,
+        profilePic: decoded.picture || null,
       });
     }
 
@@ -610,8 +688,9 @@ app.post("/Glogin", async(req,res)=>{
 
 })
 
-app.listen(3000, ()=>{
-  console.log(`Server running on port 3000`);
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, ()=>{
+  console.log(`Server running on port ${PORT}`);
 });
 
 
