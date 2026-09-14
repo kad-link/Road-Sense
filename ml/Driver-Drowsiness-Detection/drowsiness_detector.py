@@ -15,11 +15,19 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 
 # Model paths
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BEST_MODEL_PATH = os.path.join(BASE_DIR, 'runs', 'detect', 'train', 'weights', 'best.pt')
+LAST_MODEL_PATH = os.path.join(BASE_DIR, 'runs', 'detect', 'train', 'weights', 'last.pt')
 BASE_WEIGHTS = 'yolov8n.pt'
-CUSTOM_MODEL_PATH = 'runs/detect/train/weights/last.pt'
 
-# Load model
-load_path = CUSTOM_MODEL_PATH if os.path.exists(CUSTOM_MODEL_PATH) else BASE_WEIGHTS
+# Load model - prioritize best.pt, then last.pt, fallback to yolov8n.pt
+if os.path.exists(BEST_MODEL_PATH):
+    load_path = BEST_MODEL_PATH
+elif os.path.exists(LAST_MODEL_PATH):
+    load_path = LAST_MODEL_PATH
+else:
+    load_path = BASE_WEIGHTS
+
 print(f"Loading YOLOv8 Drowsiness Detector from: {load_path}")
 model = YOLO(load_path)
 
