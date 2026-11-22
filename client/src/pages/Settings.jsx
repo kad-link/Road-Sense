@@ -3,13 +3,27 @@ import Navbar from '../components/Navbar';
 import { Settings as SettingsIcon, Bell, Volume2, Shield, Eye, Sliders, CheckCircle2 } from 'lucide-react';
 
 function Settings() {
-  const [sensitivity, setSensitivity] = useState('standard');
-  const [audioAlerts, setAudioAlerts] = useState(true);
-  const [units, setUnits] = useState('metric');
-  const [autoLog, setAutoLog] = useState(true);
+  const [sensitivity, setSensitivity] = useState(() => {
+    return localStorage.getItem('roadsense_sensitivity') || 'standard';
+  });
+  const [audioAlerts, setAudioAlerts] = useState(() => {
+    const saved = localStorage.getItem('roadsense_audio_alerts');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+  const [units, setUnits] = useState(() => {
+    return localStorage.getItem('roadsense_units') || 'metric';
+  });
+  const [autoLog, setAutoLog] = useState(() => {
+    const saved = localStorage.getItem('roadsense_autolog');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
   const [saved, setSaved] = useState(false);
 
   const handleSave = () => {
+    localStorage.setItem('roadsense_sensitivity', sensitivity);
+    localStorage.setItem('roadsense_audio_alerts', JSON.stringify(audioAlerts));
+    localStorage.setItem('roadsense_units', units);
+    localStorage.setItem('roadsense_autolog', JSON.stringify(autoLog));
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   };

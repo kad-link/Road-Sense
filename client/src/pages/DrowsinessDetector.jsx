@@ -314,6 +314,11 @@ const DrowsinessDetector = () => {
 
   const playAlertSound = () => {
     try {
+      const savedAudioPref = localStorage.getItem('roadsense_audio_alerts');
+      if (savedAudioPref !== null && JSON.parse(savedAudioPref) === false) {
+        return; // User has muted audio alerts in Settings
+      }
+
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
