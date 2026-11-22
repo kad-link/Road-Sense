@@ -77,12 +77,16 @@ def handle_frame(data):
     client_id = request.sid
     
     try:
+        if not data or 'image' not in data or ',' not in data['image']:
+            emit('error', {'message': 'Invalid frame payload'})
+            return
+
         # Decode base64 image from frontend
         img_data = data['image'].split(',')[1]
         img_bytes = base64.b64decode(img_data)
         nparr = np.frombuffer(img_bytes, np.uint8)
         frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        
+
         if frame is None:
             emit('error', {'message': 'Invalid frame received'})
             return
