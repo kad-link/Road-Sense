@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Lock, Mail, Zap } from 'lucide-react';
+import { ArrowLeft, Lock, Mail } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { signInWithPopup } from 'firebase/auth';
@@ -16,17 +16,6 @@ function Login() {
   const [error, setError] = useState('');
 
   const navigate = useNavigate();
-
-  const handleDemoLogin = () => {
-    const demoUser = {
-      id: 'demo-driver-001',
-      email: 'alex.driver@roadsense.ai',
-      fullName: 'Alex Vance (Verified Demo Driver)',
-      carModel: 'Tesla Model 3 / CarPlay'
-    };
-    login(demoUser, 'demo_jwt_token_roadsense_live_preview');
-    navigate('/dashboard');
-  };
 
   const handleChange = (e) => {
     setFormData({
@@ -150,16 +139,6 @@ function Login() {
               <span>{error}</span>
             </div>
           )}
-
-          {/* Instant Demo Driver Button */}
-          <button
-            type="button"
-            onClick={handleDemoLogin}
-            className="w-full mb-4 py-2.5 px-4 rounded-xl text-xs font-semibold bg-emerald-950/70 hover:bg-emerald-900/80 border border-emerald-600/80 text-emerald-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg hover:shadow-emerald-950/40"
-          >
-            <Zap className="w-4 h-4 text-emerald-400" />
-            <span>⚡ Instant Demo Driver Access (1-Click Preview)</span>
-          </button>
 
           {/* Google Sign In Button */}
           <button
