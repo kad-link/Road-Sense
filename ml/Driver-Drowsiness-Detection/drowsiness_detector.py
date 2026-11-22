@@ -12,7 +12,17 @@ from threading import Lock
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
+
+# Gracefully select async_mode: use threading on Python 3.12+ where eventlet's asyncore was removed
+async_mode = 'threading'
+try:
+    import eventlet
+    import asyncore  # if asyncore is missing (Python 3.12+), fallback to threading
+    async_mode = 'eventlet'
+except Exception:
+    async_mode = 'threading'
+
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode=async_mode)
 
 # Model paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -163,4 +173,4 @@ if __name__ == '__main__':
     print(f"📦 Model: {load_path}")
     print("🌐 Server: http://0.0.0.0:8800")
     print("="*50)
-    socketio.run(app, host='0.0.0.0', port=8800, debug=False)
+    socketio.run(app, host='0.0.0.0', port=8800, debug=False, allow_unsafe_werkzeug=True)
