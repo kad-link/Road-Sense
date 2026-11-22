@@ -714,7 +714,7 @@ app.post("/Glogin", async(req,res)=>{
   const { token} = req.body;
 
   try {
-    if (admin.apps.length === 0) {
+    if (!admin.apps || admin.apps.length === 0) {
       return res.status(503).json({
         success: false,
         message: "Google login is currently unavailable (Firebase not configured)."
