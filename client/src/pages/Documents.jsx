@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar';
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from 'react-router-dom';
 import DocCard from '../components/DocCard';
+import { BACKEND_URL } from '../utils/apiConfig';
 
 export default function Documents() {
   const { user, token, loading } = useAuth();
@@ -34,7 +35,7 @@ export default function Documents() {
     const fetchDocuments = async () => {
       setLoadingDocs(true);
       try {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/docs/${user?.email}`, {
+        const response = await fetch(`${BACKEND_URL}/docs/${user?.email}`, {
           method: "GET",
           headers: {
             "Authorization": `Bearer ${token}`,  
@@ -88,7 +89,7 @@ export default function Documents() {
     formData.append('fileDescription', description);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/docs/${user.email}`, {
+      const response = await fetch(`${BACKEND_URL}/docs/${user.email}`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`
@@ -128,7 +129,7 @@ export default function Documents() {
     setError('');
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/docs/${docToDelete.id}`, {
+      const response = await fetch(`${BACKEND_URL}/docs/${docToDelete.id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

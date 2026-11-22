@@ -10,6 +10,7 @@ import {
 import { FaLocationArrow,FaSignOutAlt, FaTimes,FaUser,  FaPlus, FaCar, FaBus, FaWalking, FaEdit, FaTrash } from 'react-icons/fa';
 import { useAuth } from "../context/AuthContext";
 import { NavLink,useNavigate } from 'react-router-dom';
+import { BACKEND_URL } from '../utils/apiConfig';
 
 
 const center = { lat: 17.6974, lng: 83.2990 };
@@ -169,7 +170,7 @@ function Maps() {
           ? `${origin.lat.toFixed(4)}, ${origin.lng.toFixed(4)}`
           : (origin || 'Current Location');
 
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/trip/${user.email}`,{
+        const response = await fetch(`${BACKEND_URL}/trip/${user.email}`,{
           method:"POST",
           headers:{
             "Content-Type" : "application/json",

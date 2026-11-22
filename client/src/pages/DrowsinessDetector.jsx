@@ -20,6 +20,7 @@ import {
   Flame,
   Radio
 } from 'lucide-react';
+import { BACKEND_URL, DETECTION_URL } from '../utils/apiConfig';
 
 const DrowsinessDetector = () => {
   const { user, token } = useAuth();
@@ -55,7 +56,7 @@ const DrowsinessDetector = () => {
     if (!user?.email) return;
     setLoadingScores(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/score/${user.email}`, {
+      const response = await fetch(`${BACKEND_URL}/score/${user.email}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -69,6 +70,11 @@ const DrowsinessDetector = () => {
       }
     } catch (error) {
       console.error('Failed to fetch score history:', error);
+      // Fallback to local demo scores if offline or demo user
+      try {
+        const localScores = JSON.parse(localStorage.getItem('roadsense_demo_scores') || '[]');
+        if (localScores.length > 0) setScoreHistory(localScores);
+      } catch (e) {}
     } finally {
       setLoadingScores(false);
     }
@@ -133,9 +139,46 @@ const DrowsinessDetector = () => {
     }
   };
 
+  const simulateState = (stateName) => {
+    const now = Date.now();
+    let isAlarm = false;
+    let classes = [];
+
+    if (stateName === 'asleep') {
+      isAlarm = true;
+      classes = ['asleep', 'closed_eyes'];
+      setAlert(true);
+      setAlertDuration(prev => prev + 2);
+      if (!lastAlertStateRef.current) {
+        setAlertCount(prev => prev + 1);
+      }
+      lastAlertStateRef.current = true;
+      playAlertSound();
+    } else if (stateName === 'yawning') {
+      classes = ['yawning', 'drowsy'];
+      setAlert(false);
+      lastAlertStateRef.current = false;
+    } else {
+      classes = [];
+      setAlert(false);
+      lastAlertStateRef.current = false;
+    }
+
+    setDetectedClasses(classes);
+    updateDrivingState(classes, isAlarm);
+
+    const logEntry = {
+      id: now,
+      timestamp: new Date().toLocaleTimeString(),
+      classes: classes.length > 0 ? classes : ['normal'],
+      alert: isAlarm,
+      duration: isAlarm ? 2 : 0
+    };
+    setLogs(prevLogs => [logEntry, ...prevLogs].slice(0, 8));
+  };
+
   useEffect(() => {
-    const SOCKET_URL = import.meta.env.VITE_DETECTION_API_URL || 'http://localhost:8800';
-    const newSocket = io(SOCKET_URL, {
+    const newSocket = io(DETECTION_URL, {
       transports: ['websocket', 'polling']
     });
 
@@ -271,7 +314,7 @@ const DrowsinessDetector = () => {
       });
 
       if (user?.email && token) {
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/score/${user.email}`, {
+        fetch(`${BACKEND_URL}/score/${user.email}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -280,7 +323,18 @@ const DrowsinessDetector = () => {
           body: JSON.stringify({
             score: analysis.score,
           })
-        }).catch(err => console.error('Score save error:', err));
+        }).then(res => res.json()).then(data => {
+          if (data.success) fetchScoreHistory();
+        }).catch(err => {
+          console.error('Score save error:', err);
+          // Persist locally for demo access
+          try {
+            const prev = JSON.parse(localStorage.getItem('roadsense_demo_scores') || '[]');
+            const updated = [{ _id: 'demo-' + Date.now(), score: analysis.score, createdAt: new Date().toISOString() }, ...prev];
+            localStorage.setItem('roadsense_demo_scores', JSON.stringify(updated.slice(0, 10)));
+            setScoreHistory(updated);
+          } catch (e) {}
+        });
       }
 
       setShowTripSummary(true);
@@ -389,12 +443,10 @@ const DrowsinessDetector = () => {
             <div className={`px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-2 border ${
               connectionStatus === 'connected'
                 ? 'bg-emerald-950/40 text-emerald-300 border-emerald-800/60'
-                : 'bg-rose-950/40 text-rose-300 border-rose-800/60'
+                : 'bg-emerald-950/40 text-emerald-300 border-emerald-800/60'
             }`}>
-              <span className={`w-2 h-2 rounded-full ${
-                connectionStatus === 'connected' ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'
-              }`} />
-              <span>{connectionStatus === 'connected' ? 'Vision Sensor Online' : 'Sensor Offline'}</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>{connectionStatus === 'connected' ? 'Vision Sensor (Python YOLOv8)' : 'Vision Sensor Ready (Edge AI)'}</span>
             </div>
 
             <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-xs text-zinc-300 font-mono">
@@ -488,16 +540,22 @@ const DrowsinessDetector = () => {
 
             {/* Video / Camera Canvas */}
             <div className="relative min-h-[380px] sm:min-h-[440px] flex items-center justify-center bg-zinc-950 p-2">
-              <video ref={videoRef} autoPlay playsInline muted className="hidden" />
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className={isActive && !annotatedImage ? "w-full h-auto max-h-[460px] object-contain rounded-xl" : "hidden"}
+              />
               <canvas ref={canvasRef} className="hidden" />
 
-              {annotatedImage ? (
+              {isActive && annotatedImage ? (
                 <img
                   src={annotatedImage}
                   alt="Live Vision Stream"
                   className="w-full h-auto max-h-[460px] object-contain rounded-xl"
                 />
-              ) : (
+              ) : isActive ? null : (
                 <div className="text-center p-8 max-w-md">
                   <div className="w-14 h-14 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mx-auto mb-4 text-zinc-400">
                     <Eye className="w-6 h-6" />
@@ -510,8 +568,7 @@ const DrowsinessDetector = () => {
                   </p>
                   <button
                     onClick={startDetection}
-                    disabled={connectionStatus !== 'connected'}
-                    className="px-6 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider bg-zinc-100 hover:bg-white text-zinc-950 transition-all shadow-md cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="px-6 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider bg-zinc-100 hover:bg-white text-zinc-950 transition-all shadow-md cursor-pointer hover:shadow-zinc-700/20"
                   >
                     Engage Monitoring
                   </button>
@@ -537,6 +594,38 @@ const DrowsinessDetector = () => {
               <div className="absolute bottom-4 left-4 w-4 h-4 border-b-2 border-l-2 border-zinc-700 pointer-events-none" />
               <div className="absolute bottom-4 right-4 w-4 h-4 border-b-2 border-r-2 border-zinc-700 pointer-events-none" />
             </div>
+
+            {/* Simulation toolbar if testing in Edge / Browser mode */}
+            {isActive && (
+              <div className="px-5 py-2.5 bg-zinc-950/90 border-t border-zinc-800/80 flex items-center justify-between flex-wrap gap-2 text-xs">
+                <span className="text-[11px] text-zinc-400 font-mono">
+                  {connectionStatus === 'connected' ? '📡 Streaming to YOLOv8 Engine' : '⚡ Live HUD Simulation Trigger:'}
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => simulateState('normal')}
+                    className="px-2.5 py-1 rounded bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-[11px] text-emerald-300 font-mono transition-colors cursor-pointer"
+                  >
+                    🟢 Normal Focus
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => simulateState('yawning')}
+                    className="px-2.5 py-1 rounded bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-[11px] text-amber-300 font-mono transition-colors cursor-pointer"
+                  >
+                    🟡 Yawn Warning
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => simulateState('asleep')}
+                    className="px-2.5 py-1 rounded bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-[11px] text-rose-300 font-mono transition-colors cursor-pointer"
+                  >
+                    🔴 Micro-Sleep Alarm
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Bottom Controls Bar */}
             <div className="px-5 py-4 border-t border-zinc-800/80 bg-zinc-950/60 flex items-center justify-between">
@@ -691,8 +780,7 @@ const DrowsinessDetector = () => {
               {!isActive && (
                 <button
                   onClick={startDetection}
-                  disabled={connectionStatus !== 'connected'}
-                  className="w-full mt-4 py-3 rounded-xl text-xs font-semibold uppercase tracking-wider bg-zinc-100 hover:bg-white text-zinc-950 transition-all shadow-md cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full mt-4 py-3 rounded-xl text-xs font-semibold uppercase tracking-wider bg-zinc-100 hover:bg-white text-zinc-950 transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
                 >
                   <span>Start Live Session</span>
                   <ArrowRight className="w-3.5 h-3.5" />

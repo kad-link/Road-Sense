@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Mail, Phone, MapPin, Send, CheckCircle2, AlertCircle } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import { useAuth } from "../context/AuthContext";
+import { BACKEND_URL } from '../utils/apiConfig';
 
 export default function Contact() {
   const { user } = useAuth();
@@ -43,7 +44,7 @@ export default function Contact() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/send-email`, {  
+      const response = await fetch(`${BACKEND_URL}/send-email`, {  
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

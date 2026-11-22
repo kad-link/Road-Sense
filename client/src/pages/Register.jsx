@@ -4,6 +4,7 @@ import { ArrowLeft, Mail, Lock, User, Car } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '../config/firebase';
+import { BACKEND_URL } from '../utils/apiConfig';
 
 function Register() {
   const { login } = useAuth();
@@ -33,7 +34,7 @@ function Register() {
       const result = await signInWithPopup(auth, googleProvider);
       const idToken = await result.user.getIdToken();
 
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/Glogin`, {
+      const response = await fetch(`${BACKEND_URL}/Glogin`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -78,7 +79,7 @@ function Register() {
     setError('');
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/registeruser`, {
+      const response = await fetch(`${BACKEND_URL}/registeruser`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

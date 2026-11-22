@@ -5,6 +5,7 @@ import InfoCard from '../components/InfoCard';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { MapPin, Navigation, Clock, Search, ArrowLeft, Route } from 'lucide-react';
+import { BACKEND_URL } from '../utils/apiConfig';
 
 function Trips() {
   const { user, token, loading } = useAuth();
@@ -22,7 +23,7 @@ function Trips() {
     }
 
     setLoading(true);
-    fetch(`${import.meta.env.VITE_BACKEND_URL}/trip/${user.email}`, {
+    fetch(`${BACKEND_URL}/trip/${user.email}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

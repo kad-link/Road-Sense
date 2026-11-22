@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   Compass
 } from 'lucide-react';
+import { BACKEND_URL } from '../utils/apiConfig';
 import StatsCard from '../components/StatsCard';
 
 function Dashboard() {
@@ -36,13 +37,13 @@ function Dashboard() {
       setDataLoading(true);
       try {
         const [scoresRes, tripsRes, docsRes] = await Promise.all([
-          fetch(`${import.meta.env.VITE_BACKEND_URL}/score/${user.email}`, {
+          fetch(`${BACKEND_URL}/score/${user.email}`, {
             headers: { Authorization: `Bearer ${token}` }
           }).catch(() => null),
-          fetch(`${import.meta.env.VITE_BACKEND_URL}/trip/${user.email}`, {
+          fetch(`${BACKEND_URL}/trip/${user.email}`, {
             headers: { Authorization: `Bearer ${token}` }
           }).catch(() => null),
-          fetch(`${import.meta.env.VITE_BACKEND_URL}/docs/${user.email}`, {
+          fetch(`${BACKEND_URL}/docs/${user.email}`, {
             headers: { Authorization: `Bearer ${token}` }
           }).catch(() => null),
         ]);
