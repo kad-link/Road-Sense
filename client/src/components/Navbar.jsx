@@ -40,7 +40,7 @@ function Navbar() {
     navigate('/');
   };
 
-  const navLinks = [
+  const baseNavLinks = [
     { name: 'Safety', path: '/safety' },
     { name: 'Trips', path: '/trips' },
     { name: 'Documents', path: '/docs' },
@@ -48,6 +48,10 @@ function Navbar() {
     { name: 'About', path: '/about' },
     { name: 'Contact', path: '/contact' },
   ];
+
+  const navLinks = isAuthenticated
+    ? [{ name: 'Dashboard', path: '/dashboard' }, ...baseNavLinks]
+    : baseNavLinks;
 
   return (
     <>
@@ -110,17 +114,20 @@ function Navbar() {
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setShowDropdown(!showDropdown)}
-                  className="flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-zinc-900 transition-colors border border-transparent hover:border-zinc-800 cursor-pointer"
+                  className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 transition-colors cursor-pointer"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-zinc-800 border border-zinc-700 text-zinc-200 font-semibold text-xs flex items-center justify-center">
-                    {user?.fullName?.charAt(0).toUpperCase() || 'U'}
+                  <div className="relative">
+                    <div className="w-7 h-7 rounded-lg bg-zinc-800 border border-zinc-700 text-zinc-100 font-bold text-xs flex items-center justify-center font-mono">
+                      {user?.fullName?.charAt(0).toUpperCase() || 'D'}
+                    </div>
+                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-zinc-950" />
                   </div>
                   <div className="text-left hidden lg:block">
-                    <p className="text-xs font-medium text-zinc-200 leading-none">
+                    <p className="text-xs font-semibold text-zinc-100 leading-none">
                       {user?.fullName || 'Driver'}
                     </p>
-                    <p className="text-[10px] text-zinc-500 truncate max-w-[120px] mt-0.5">
-                      {user?.email}
+                    <p className="text-[10px] text-zinc-400 truncate max-w-[120px] mt-0.5 font-mono">
+                      {user?.carModel || user?.email}
                     </p>
                   </div>
                   <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />

@@ -46,7 +46,7 @@ function Login() {
 
       if (response.ok && data.success) {
         login(data.user, data.token);
-        navigate("/");
+        navigate("/dashboard");
       } else {
         setError(data.message || "Google sign-in failed");
       }
@@ -91,7 +91,7 @@ function Login() {
           email: "",
           password: ""
         });
-        navigate("/");
+        navigate("/dashboard");
       } else {
         setError(data.message || "Invalid credentials. Please verify your email and password.");
       }

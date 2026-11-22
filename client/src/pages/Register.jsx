@@ -48,7 +48,7 @@ function Register() {
 
       if (response.ok && data.success) {
         login(data.user, data.token);
-        navigate("/");
+        navigate("/dashboard");
       } else {
         setError(data.message || "Google sign-in failed");
       }
@@ -103,7 +103,7 @@ function Register() {
           password: '',
           confirmPassword: ''
         });
-        navigate("/");
+        navigate("/dashboard");
       } else {
         setError(data.message || "Registration failed. Please check your details.");
       }

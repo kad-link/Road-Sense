@@ -81,7 +81,10 @@ function Dashboard() {
   }, 0);
 
   return (
-    <div className="bg-zinc-950 min-h-screen text-zinc-100 pb-16">
+    <div className="bg-zinc-950 min-h-screen text-zinc-100 pb-16 relative overflow-hidden">
+      {/* Background ambient lighting */}
+      <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[700px] h-[300px] bg-zinc-800/20 rounded-full blur-3xl pointer-events-none" />
+
       <Navbar />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">

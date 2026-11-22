@@ -294,43 +294,71 @@ function Maps() {
         </GoogleMap>
       </div>
 
+      {/* Top Left Navigation Back to Dashboard */}
+      <div className="absolute top-4 left-4 z-20 flex items-center gap-2">
+        <NavLink
+          to="/dashboard"
+          className="px-3.5 py-2 rounded-xl bg-zinc-950/90 hover:bg-zinc-900 border border-zinc-800 text-zinc-200 text-xs font-semibold backdrop-blur-md shadow-xl flex items-center gap-2 transition-all cursor-pointer"
+        >
+          <div className="w-5 h-5 rounded bg-zinc-100 text-zinc-950 font-bold flex items-center justify-center font-mono text-[10px]">
+            RS
+          </div>
+          <span>Dashboard</span>
+        </NavLink>
+      </div>
+
       <div className="absolute top-4 right-4 z-20">
         <div className="relative">
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="flex items-center space-x-2 bg-white rounded-full shadow-lg px-4 py-2 hover:shadow-xl transition-shadow"
+            className="flex items-center gap-2 bg-zinc-950/90 border border-zinc-800 text-zinc-200 rounded-xl shadow-xl px-3.5 py-2 backdrop-blur-md hover:bg-zinc-900 transition-colors cursor-pointer"
           >
-            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
-              {user?.fullName ? user.fullName.charAt(0).toUpperCase() : <FaUser />}
+            <div className="w-6 h-6 bg-zinc-800 border border-zinc-700 rounded-lg flex items-center justify-center text-zinc-200 font-bold text-xs font-mono">
+              {user?.fullName ? user.fullName.charAt(0).toUpperCase() : <FaUser size={10} />}
             </div>
-            <span className="font-medium text-gray-700">{user?.fullName || 'User'}</span>
+            <span className="font-medium text-xs text-zinc-200 hidden sm:inline">{user?.fullName || 'Driver'}</span>
           </button>
 
           {showUserMenu && (
-            <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl py-2 z-30">
-              <div className="px-4 py-3 border-b border-gray-200">
-                <p className="text-sm font-semibold text-gray-900">{user?.fullName || 'User'}</p>
-                <p className="text-sm text-gray-600 truncate">{user?.email || 'user@example.com'}</p>
+            <div className="absolute right-0 mt-2 w-64 bg-zinc-900/95 border border-zinc-800 rounded-2xl shadow-2xl py-2 z-30 text-xs backdrop-blur-xl">
+              <div className="px-4 py-3 border-b border-zinc-800">
+                <p className="font-semibold text-white">{user?.fullName || 'Driver'}</p>
+                <p className="text-zinc-500 text-[11px] truncate">{user?.email || 'driver@roadsense.ai'}</p>
+                {user?.carModel && (
+                  <span className="inline-block mt-1 px-2 py-0.5 rounded bg-zinc-800 text-[10px] text-zinc-400 font-mono">
+                    {user?.carModel}
+                  </span>
+                )}
               </div>
-              <NavLink 
-              to="/"
-              className="ml-3 "
-              >
-                Go Back
-              </NavLink>
+              <div className="py-1">
+                <NavLink to="/dashboard" className="block px-4 py-2 text-zinc-300 hover:text-white hover:bg-zinc-800">
+                  Dashboard
+                </NavLink>
+                <NavLink to="/safety" className="block px-4 py-2 text-zinc-300 hover:text-white hover:bg-zinc-800">
+                  Safety Console
+                </NavLink>
+                <NavLink to="/trips" className="block px-4 py-2 text-zinc-300 hover:text-white hover:bg-zinc-800">
+                  Trip History
+                </NavLink>
+              </div>
+              <div className="border-t border-zinc-800 pt-1">
+                <button onClick={logout} className="w-full text-left px-4 py-2 text-rose-400 hover:bg-rose-950/30">
+                  Sign Out
+                </button>
+              </div>
             </div>
           )}
         </div>
       </div>
 
-      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 p-4 rounded-lg bg-white shadow-lg min-w-[600px] z-10">
+      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 p-2 rounded-2xl bg-zinc-950/90 border border-zinc-800 shadow-2xl w-[92vw] max-w-lg z-10 backdrop-blur-md">
         <div className="flex items-center space-x-2">
           <Autocomplete className="flex-1">
             <input
               type="text"
               ref={originRef}
-              placeholder={`Enter source : ${userLocation?.lat ?? ''} ${userLocation?.lng ?? ''}`}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder={`Enter origin : ${userLocation?.lat ? userLocation.lat.toFixed(4) : ''}, ${userLocation?.lng ? userLocation.lng.toFixed(4) : ''}`}
+              className="w-full px-3.5 py-2 bg-zinc-900 border border-zinc-800 text-zinc-100 placeholder-zinc-500 rounded-xl outline-none focus:ring-1 focus:ring-zinc-600 text-xs font-mono"
             />
           </Autocomplete>
           <button
@@ -338,21 +366,21 @@ function Maps() {
               map.panTo(center);
               map.setZoom(12);
             }}
-            className="p-3 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition-colors"
+            className="p-2.5 bg-zinc-900 text-zinc-300 hover:text-white hover:bg-zinc-800 border border-zinc-800 rounded-xl transition-colors cursor-pointer"
             title="Reset to center"
           >
-            <FaLocationArrow />
+            <FaLocationArrow size={12} />
           </button>
         </div>
       </div>
 
       
       {destinations.length === 0 ? (
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 p-6 rounded-lg bg-white shadow-lg min-w-[600px] z-10">
-          <div className="flex items-center justify-between">
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 p-5 rounded-2xl bg-zinc-950/90 border border-zinc-800 shadow-2xl w-[92vw] max-w-lg z-10 backdrop-blur-md">
+          <div className="flex items-center justify-between gap-4">
             <div>
-              <h2 className="text-xl font-bold mb-1">Estimate commute time</h2>
-              <p className="text-gray-600 text-sm">See travel time and directions for places nearby</p>
+              <h2 className="text-sm font-semibold text-white">Estimate Commute Time</h2>
+              <p className="text-zinc-400 text-xs">Route duration & turn-by-turn navigation</p>
             </div>
             <button
               onClick={() => {
@@ -360,15 +388,15 @@ function Maps() {
                 setEditingIndex(null);
                 setCurrentTravelMode('DRIVING');
               }}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              className="flex items-center space-x-2 px-4 py-2 bg-zinc-100 hover:bg-white text-zinc-950 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all shadow-md cursor-pointer flex-shrink-0"
             >
-              <FaPlus />
-              <span>Add destination</span>
+              <FaPlus size={12} />
+              <span>Add Waypoint</span>
             </button>
           </div>
         </div>
       ) : (
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 p-4 rounded-lg bg-white shadow-lg min-w-[800px] max-w-[90vw] z-10">
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 p-4 rounded-2xl bg-zinc-950/90 border border-zinc-800 shadow-2xl w-[92vw] max-w-3xl z-10 backdrop-blur-md">
           <div className="flex items-center space-x-3 overflow-x-auto pb-2">
             {destinations.map((dest, index) => {
               const TravelIcon = TRAVEL_MODES[dest.travelMode].icon;
@@ -378,19 +406,17 @@ function Maps() {
                 <div
                   key={index}
                   onClick={() => handleDestinationClick(index)}
-                  className={`flex-shrink-0 w-64 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                  className={`flex-shrink-0 w-64 p-3 rounded-xl border cursor-pointer transition-all ${
                     isActive 
-                      ? 'border-blue-500 bg-blue-50 shadow-md' 
-                      : 'border-gray-200 hover:border-gray-300 hover:shadow'
+                      ? 'border-zinc-400 bg-zinc-900 text-white shadow-xl' 
+                      : 'border-zinc-800 bg-zinc-950/60 text-zinc-300 hover:border-zinc-700'
                   }`}
                 >
-                  {isActive && <div className="h-1 bg-blue-500 rounded-t-lg -mt-3 -mx-3 mb-2"></div>}
-                  
                   <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center space-x-2 text-sm text-gray-600">
-                      <TravelIcon className="text-gray-500" />
+                    <div className="flex items-center space-x-2 text-xs text-zinc-400">
+                      <TravelIcon className="text-zinc-400" />
                       <span>{dest.distance}</span>
-                      <span className="font-bold text-gray-800 bg-gray-200 px-2 py-0.5 rounded">
+                      <span className="font-bold text-zinc-100 bg-zinc-800 border border-zinc-700 px-2 py-0.5 rounded text-[10px] font-mono">
                         {dest.label}
                       </span>
                     </div>
@@ -400,28 +426,28 @@ function Maps() {
                           e.stopPropagation();
                           handleEditDestination(index);
                         }}
-                        className="p-1.5 text-gray-600 hover:bg-gray-200 rounded transition-colors"
+                        className="p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded transition-colors"
                         title="Edit"
                       >
-                        <FaEdit size={14} />
+                        <FaEdit size={12} />
                       </button>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteDestination(index);
                         }}
-                        className="p-1.5 text-red-600 hover:bg-red-100 rounded transition-colors"
+                        className="p-1.5 text-rose-400 hover:bg-rose-950/40 rounded transition-colors"
                         title="Delete"
                       >
-                        <FaTrash size={14} />
+                        <FaTrash size={12} />
                       </button>
                     </div>
                   </div>
                   
-                  <div className="text-sm text-gray-600 mb-1 truncate">
+                  <div className="text-xs text-zinc-400 mb-1 truncate">
                     To {dest.name}
                   </div>
-                  <div className="text-2xl font-bold text-gray-900">{dest.duration}</div>
+                  <div className="text-xl font-bold text-white font-mono">{dest.duration}</div>
                 </div>
               );
             })}
@@ -432,20 +458,20 @@ function Maps() {
                 setEditingIndex(null);
                 setCurrentTravelMode('DRIVING');
               }}
-              className="flex-shrink-0 w-40 h-32 flex flex-col items-center justify-center space-y-2 bg-blue-50 text-blue-600 border-2 border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+              className="flex-shrink-0 w-36 h-28 flex flex-col items-center justify-center space-y-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-dashed border-zinc-700 rounded-xl transition-colors cursor-pointer text-xs"
             >
-              <FaPlus size={24} />
-              <span className="font-semibold">Add destination</span>
+              <FaPlus size={16} />
+              <span className="font-medium">Add stop</span>
             </button>
           </div>
         </div>
       )}
 
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-96 shadow-2xl">
-            <h2 className="text-2xl font-bold mb-4">
-              {editingIndex !== null ? 'Edit destination' : 'Add destination'}
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6 w-[90vw] max-w-md shadow-2xl text-zinc-100">
+            <h2 className="text-xl font-semibold mb-4 text-white">
+              {editingIndex !== null ? 'Edit Destination' : 'Add Destination'}
             </h2>
             
             <Autocomplete>
@@ -454,28 +480,29 @@ function Maps() {
                 placeholder="Enter a place or address"
                 ref={destinationInputRef}
                 defaultValue={editingIndex !== null ? destinations[editingIndex].name : ''}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+                className="w-full px-4 py-2.5 bg-zinc-900 border border-zinc-800 text-zinc-100 placeholder-zinc-500 rounded-xl outline-none focus:ring-1 focus:ring-zinc-600 mb-4 text-xs font-mono"
               />
             </Autocomplete>
 
-            <div className="grid grid-cols-4 gap-2 mb-6">
+            <div className="grid grid-cols-3 gap-2 mb-6">
               {Object.entries(TRAVEL_MODES).map(([key, { icon: Icon, label }]) => (
                 <button
                   key={key}
                   onClick={() => setCurrentTravelMode(key)}
-                  className={`flex flex-col items-center justify-center p-3 border-2 rounded-md transition-all ${
+                  className={`flex flex-col items-center justify-center p-3 border rounded-xl transition-all cursor-pointer ${
                     currentTravelMode === key
-                      ? 'border-blue-500 bg-blue-50 text-blue-600'
-                      : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                      ? 'border-white bg-zinc-100 text-zinc-950 font-bold'
+                      : 'border-zinc-800 bg-zinc-900 text-zinc-400 hover:border-zinc-700'
                   }`}
                   title={label}
                 >
-                  <Icon size={24} />
+                  <Icon size={20} />
+                  <span className="text-[10px] mt-1 font-mono uppercase">{label}</span>
                 </button>
               ))}
             </div>
 
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center">
               {editingIndex !== null && (
                 <button
                   onClick={() => {
@@ -483,7 +510,7 @@ function Maps() {
                     setShowModal(false);
                     setEditingIndex(null);
                   }}
-                  className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-md transition-colors font-semibold"
+                  className="px-3 py-1.5 text-rose-400 hover:bg-rose-950/30 rounded-lg transition-colors text-xs font-semibold cursor-pointer"
                 >
                   Delete
                 </button>
@@ -494,13 +521,13 @@ function Maps() {
                     setShowModal(false);
                     setEditingIndex(null);
                   }}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+                  className="px-4 py-2 text-zinc-400 hover:text-white rounded-xl transition-colors text-xs font-semibold cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleAddDestination}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-semibold"
+                  className="px-5 py-2 bg-zinc-100 hover:bg-white text-zinc-950 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all shadow-md cursor-pointer"
                 >
                   {editingIndex !== null ? 'Done' : 'Add'}
                 </button>
