@@ -58,56 +58,64 @@ function Maps() {
 
 
   function getCurrentLocation() {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const pos = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        };
-        setUserLocation(pos);
-        setLoading(false); 
-        if (originRef.current) {
-          originRef.current.value = 'Your Current Location';
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const pos = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          };
+          setUserLocation(pos);
+          setLoading(false); 
+          if (originRef.current) {
+            originRef.current.value = 'Your Current Location';
+          }
+          if (map) {
+            map.panTo(pos);
+          }
+        },
+        (error) => {
+          console.warn('Geolocation unavailable, defaulting to center coordinates:', error);
+          setUserLocation(center);
+          setLoading(false);
         }
-        if (map) {
-          map.panTo(pos);
-        }
-      },
-      (error) => {
-        console.error('Error getting location:', error);
-        alert('Unable to get your location. Please enter manually.');
-      }
-    );
-  } else {
-    alert('Geolocation is not supported by your browser.');
+      );
+    } else {
+      setUserLocation(center);
+      setLoading(false);
+    }
   }
-}
 
-useEffect(()=>{
-  getCurrentLocation();
-},[])
+  useEffect(()=>{
+    getCurrentLocation();
+  },[])
 
   if(loading){
-    return <div>Fetching location . . .</div>
+    return (
+      <div className="flex items-center justify-center h-screen w-screen bg-zinc-950 text-zinc-300 font-mono text-sm">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+          <span>Locating vehicle coordinates...</span>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
-    return <div>{error}</div>;
+    return (
+      <div className="flex items-center justify-center h-screen w-screen bg-zinc-950 text-rose-400 font-mono text-sm p-4">
+        {error}
+      </div>
+    );
   }
-
-  if (!userLocation) {
-    return <div>No location available.</div>;
-  }
-
-
 
   if (!isLoaded) {
     return (
-      <div className="space-y-3 p-4">
-        <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
-        <div className="h-4 bg-gray-200 rounded animate-pulse w-5/6"></div>
-        <div className="h-4 bg-gray-200 rounded animate-pulse w-4/6"></div>
+      <div className="flex items-center justify-center h-screen w-screen bg-zinc-950 text-zinc-400 font-mono text-sm">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-zinc-700 border-t-zinc-300 rounded-full animate-spin" />
+          <span>Loading Google Maps Navigation...</span>
+        </div>
       </div>
     );
   }
@@ -157,14 +165,18 @@ useEffect(()=>{
       }
 
       if(user?.email && token){
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/trip/${user.email}`,{
+        const formattedSource = typeof origin === 'object' && origin !== null
+          ? `${origin.lat.toFixed(4)}, ${origin.lng.toFixed(4)}`
+          : (origin || 'Current Location');
+
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/trip/${user.email}`,{
           method:"POST",
           headers:{
             "Content-Type" : "application/json",
              "Authorization": `Bearer ${token}`,
           },
           body: JSON.stringify({
-            source: origin,
+            source: formattedSource,
             destination: destination,
             duration:route.duration.text ,
             distance: route.distance.text,

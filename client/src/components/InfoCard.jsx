@@ -2,6 +2,9 @@ import React from 'react';
 import { MapPin, Navigation, Clock, Calendar, ArrowRight } from 'lucide-react';
 
 function InfoCard(props) {
+  const displaySource = (!props.source || props.source === '[object Object]') ? 'Current Location' : props.source;
+  const displayDestination = (!props.destination || props.destination === '[object Object]') ? 'Selected Destination' : props.destination;
+
   return (
     <div className="bg-zinc-900/80 hover:bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-2xl p-6 shadow-xl transition-all duration-300 flex flex-col justify-between">
       <div>
@@ -29,7 +32,7 @@ function InfoCard(props) {
             <div>
               <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-mono block">Departure</span>
               <p className="text-base font-medium text-white truncate max-w-[280px]">
-                {props.source}
+                {displaySource}
               </p>
             </div>
           </div>
@@ -42,7 +45,7 @@ function InfoCard(props) {
             <div>
               <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-mono block">Destination</span>
               <p className="text-base font-medium text-white truncate max-w-[280px]">
-                {props.destination}
+                {displayDestination}
               </p>
             </div>
           </div>
