@@ -43,8 +43,26 @@ if (
 
 
 
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:3000',
+  process.env.CLIENT_URL,
+  process.env.FRONTEND_URL,
+].filter(Boolean);
+
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (
+      allowedOrigins.includes(origin) ||
+      origin.endsWith('.vercel.app') ||
+      origin.includes('localhost')
+    ) {
+      return callback(null, true);
+    }
+    return callback(new Error('Blocked by CORS policy'));
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
@@ -73,11 +91,27 @@ app.post("/registeruser",async (req,res)=>{
   if(!fullName || !email || !password){
     return res.status(400).json({
       success:false,
-      message:"Incomplete fields"
+      message:"Full name, email, and password are required"
     });
   } 
 
-  const existingUser = await User.findOne({email});
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid email format"
+    });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({
+      success: false,
+      message: "Password must be at least 6 characters long"
+    });
+  }
+
+  const normalizedEmail = email.toLowerCase().trim();
+  const existingUser = await User.findOne({email: normalizedEmail});
   if(existingUser){
     return res.status(400).json({
       success:false,
@@ -89,10 +123,10 @@ app.post("/registeruser",async (req,res)=>{
   const encryptedPassword = await bcrypt.hash(password, salt);
 
   const newUser = new User({
-    fullName,
-    email,
+    fullName: fullName.trim(),
+    email: normalizedEmail,
     password:encryptedPassword,
-    carModel: carModel||null
+    carModel: carModel ? carModel.trim() : null
   })
 
   await newUser.save();
@@ -136,12 +170,20 @@ app.post("/loginuser",async (req,res)=>{
       })
     }
 
-    const user = await User.findOne({email});
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = await User.findOne({email: normalizedEmail});
 
     if(user){
-      const passowrdValidator = await bcrypt.compare(password,user.password);
+      if (user.authProvider === 'google' && !user.password) {
+        return res.status(400).json({
+          success: false,
+          message: "This account was registered with Google. Please use Google Sign In."
+        });
+      }
 
-      if(passowrdValidator){
+      const passwordValidator = await bcrypt.compare(password,user.password);
+
+      if(passwordValidator){
 
         const token = jwt.sign(
           {userId: user._id, email: user.email},
@@ -174,10 +216,10 @@ app.post("/loginuser",async (req,res)=>{
         });
     }
   } catch (error) {
+    console.error("Login error:", error);
     return res.status(500).json({
       success:false,
-      message:"Internal Server Error",
-      error: error.message
+      message:"Internal Server Error during login."
     })
   }
 })
@@ -196,18 +238,25 @@ app.post("/trip/:email",authMiddleware ,async(req,res)=>{
     });
   } 
 
-  const foundUser = await User.findOne({ email });
+  const foundUser = await User.findOne({ email: email.toLowerCase() });
 
   if (!foundUser) {
-  return res.status(404).json({
-    success: false,
-    message: "User not found"
-  });
-}
+    return res.status(404).json({
+      success: false,
+      message: "User not found"
+    });
+  }
 
+  // Verify ownership
+  if (req.user.userId !== foundUser._id.toString() && req.user.email !== foundUser.email) {
+    return res.status(403).json({
+      success: false,
+      message: "Forbidden: You cannot record trips for another driver"
+    });
+  }
 
-const myDate = new Date();
-const formattedDate = myDate.toLocaleDateString('en-GB'); 
+  const myDate = new Date();
+  const formattedDate = myDate.toLocaleDateString('en-GB'); 
 
   const newTrip = new Trip({
     source,
@@ -223,6 +272,7 @@ const formattedDate = myDate.toLocaleDateString('en-GB');
   res.status(201).json({
     success:true,
     message:"Trip saved successfully",
+    trip: newTrip
   });
 
   } catch (error) {
@@ -234,39 +284,40 @@ const formattedDate = myDate.toLocaleDateString('en-GB');
   }
 })
 
-app.get("/trip/:email", async(req,res)=>{
-  try{const {email} = req.params;
-  const isUser = await User.findOne({email});
+app.get("/trip/:email", authMiddleware, async(req,res)=>{
+  try{
+    const {email} = req.params;
+    const isUser = await User.findOne({ email: email.toLowerCase() });
 
-  if(!isUser){
-    return res.status(404).json({
-      success: false,
-      message: "User not found",
-    })
-  }
+    if(!isUser){
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      })
+    }
 
-  const trips= await Trip.find({user: isUser._id}).sort({_id:-1});
+    // Verify ownership
+    if (req.user.userId !== isUser._id.toString() && req.user.email !== isUser.email) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: You cannot view trips belonging to another driver"
+      });
+    }
 
-  if(!trips.length){
-    return res.status(200).json({
+    const trips= await Trip.find({user: isUser._id}).sort({_id:-1});
+
+    res.status(200).json({
       success:true,
-      message:"No trips found for this user",
-      trips: [],
+      message: trips.length ? "Trips fetched successfully" : "No trips found for this user",
+      trips,
     })
   }
-
-  res.status(200).json({
-    success:true,
-    message: "Trips fetched successfully",
-    trips,
-  })}
   catch(error){
     console.error("Trip fetching failed : " + error);
     res.status(500).json({
       success:false,
       message:"Internal Server Error. Could not fetch trips.",
     })
-    
   }
 })
 
@@ -286,12 +337,20 @@ app.post("/docs/:email", authMiddleware, (req, res, next) => {
     const { email } = req.params;
     const { fileDescription } = req.body;
 
-    const isUser = await User.findOne({ email });
+    const isUser = await User.findOne({ email: email.toLowerCase() });
 
     if (!isUser) {
       return res.status(404).json({
         success: false,
         message: "User not found",
+      });
+    }
+
+    // Verify ownership
+    if (req.user.userId !== isUser._id.toString() && req.user.email !== isUser.email) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: You cannot upload documents for another user"
       });
     }
 
@@ -335,7 +394,7 @@ app.post("/docs/:email", authMiddleware, (req, res, next) => {
 
     await newDoc.save();
 
-    return res.status(200).json({
+    return res.status(201).json({
       success: true,
       message: "File upload successful",
       document: newDoc
@@ -415,36 +474,35 @@ app.delete("/docs/:id", authMiddleware, async (req, res) => {
 });
 
 
-app.get("/docs/:email", async(req,res)=>{
-  
+app.get("/docs/:email", authMiddleware, async(req,res)=>{
   try
-  {const {email} = req.params;
+  {
+    const {email} = req.params;
+    const user = await User.findOne({ email: email.toLowerCase() });
 
-  const user = await User.findOne({email});
+    if(!user){
+      return res.status(404).json({
+        success:false,
+        message:"User not found",
+      })
+    }
 
-  if(!user){
-    return res.status(404).json({
-      success:false,
-      message:"User not found",
-    })
-  }
+    // Verify ownership
+    if (req.user.userId !== user._id.toString() && req.user.email !== user.email) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: You cannot access documents belonging to another user"
+      });
+    }
 
-  const documents= await UserDocs.find({user: user._id}).sort({_id:-1});
+    const documents= await UserDocs.find({user: user._id}).sort({_id:-1});
 
-  if(!documents.length){
-    return res.status(200).json({
+    res.status(200).json({
       success:true,
-      message:"No documents found for this user",
-      documents: [],
+      message: documents.length ? "Documents fetched successfully" : "No documents found for this user",
+      documents,
     })
   }
-
-  res.status(200).json({
-    success:true,
-    message:"Documents fetched successfully",
-    documents,
-  })}
-  
   catch(error){
     console.error("Documents fetching failed : " , error);
     res.status(500).json({
@@ -452,52 +510,53 @@ app.get("/docs/:email", async(req,res)=>{
       message:"Internal Server Error. Could not fetch documents.",
     })
   }
-
 })
 
-app.post("/score/:email",authMiddleware ,async(req,res)=>{
-
-
-
+app.post("/score/:email", authMiddleware, async(req,res)=>{
   try {
-
     const {email} = req.params;
-    const {score} =req.body;
-    
+    const {score} = req.body;
 
+    if(score === undefined || score === null){
+      return res.status(400).json({
+        success:false,
+        message:"Score saving failed. Valid score required."
+      });
+    } 
 
-    if(!score ){
-    return res.status(400).json({
-      success:false,
-      message:"Score saving failed"
+    const foundUser = await User.findOne({ email: email.toLowerCase() });
+
+    if (!foundUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    // Verify ownership
+    if (req.user.userId !== foundUser._id.toString() && req.user.email !== foundUser.email) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: You cannot record scores for another user"
+      });
+    }
+
+    const myDate = new Date();
+    const formattedDate = myDate.toLocaleDateString('en-GB'); 
+
+    const newScore = new Score({
+      score: String(score),
+      user: foundUser._id,
+      date: formattedDate
+    })
+
+    await newScore.save();
+
+    res.status(201).json({
+      success:true,
+      message:"Score saved successfully",
+      score: newScore
     });
-  } 
-
-  const foundUser = await User.findOne({ email });
-
-  if (!foundUser) {
-  return res.status(404).json({
-    success: false,
-    message: "User not found"
-  });
-}
-
-
-const myDate = new Date();
-const formattedDate = myDate.toLocaleDateString('en-GB'); 
-
-  const newScore = new Score({
-    score,
-    user: foundUser._id,
-    date: formattedDate
-  })
-
-  await newScore.save();
-
-  res.status(201).json({
-    success:true,
-    message:"Score saved successfully",
-  });
 
   } catch (error) {
     console.log(`Score storing failed : ${error}`);
@@ -508,36 +567,35 @@ const formattedDate = myDate.toLocaleDateString('en-GB');
   }
 })
 
-app.get("/score/:email", async(req,res)=>{
+app.get("/score/:email", authMiddleware, async(req,res)=>{
   try
   {
     const {email} = req.params;
+    const user = await User.findOne({ email: email.toLowerCase() });
 
-  const user = await User.findOne({email});
+    if(!user){
+      return res.status(404).json({
+        success:false,
+        message:"User not found",
+      })
+    }
 
-  if(!user){
-    return res.status(404).json({
-      success:false,
-      message:"User not found",
-    })
-  }
+    // Verify ownership
+    if (req.user.userId !== user._id.toString() && req.user.email !== user.email) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: You cannot view scores belonging to another user"
+      });
+    }
 
-  const scores= await Score.find({user: user._id}).sort({_id:-1});
+    const scores= await Score.find({user: user._id}).sort({_id:-1});
 
-  if(!scores.length){
-    return res.status(200).json({
+    res.status(200).json({
       success:true,
-      message:"No past trips found for this user",
-      scores
+      message: scores.length ? "Scores fetched successfully" : "No past trips found for this user",
+      scores,
     })
   }
-
-  res.status(200).json({
-    success:true,
-    message:"Documents fetched successfully",
-    scores,
-  })}
-  
   catch(error){
     console.error("Scores fetching failed : " , error);
     res.status(500).json({
@@ -573,9 +631,19 @@ app.post("/send-email", async (req, res) => {
       });
     }
 
+    const adminEmail = process.env.ADMIN_EMAIL || 'sricharanchittineni@gmail.com';
+
+    if (!process.env.RESEND_API_KEY) {
+      console.warn("⚠️ RESEND_API_KEY is not configured in .env. Simulating email dispatch.");
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Message received (Development Mode: Resend API key not set).' 
+      });
+    }
+
     const data = await resend.emails.send({
       from: 'RoadSense <onboarding@resend.dev>', 
-      to: ['sricharanchittineni@gmail.com'],
+      to: [adminEmail],
       replyTo: email,
       subject: `Contact Form: ${subject}`,
       html: `
