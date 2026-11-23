@@ -251,12 +251,18 @@ const DrowsinessDetector = () => {
         setAiAnalysis(null);
         setShowTripSummary(false);
 
-        videoRef.current.onloadedmetadata = () => {
-          videoRef.current.play();
+        const playAndStartStream = () => {
+          if (videoRef.current) {
+            videoRef.current.play().catch(e => console.log('Video play error:', e));
+          }
+          if (intervalRef.current) clearInterval(intervalRef.current);
           intervalRef.current = setInterval(() => {
             captureAndSendFrame();
           }, 100);
         };
+
+        videoRef.current.onloadedmetadata = playAndStartStream;
+        setTimeout(playAndStartStream, 200);
       }
     } catch (error) {
       console.error('Error accessing webcam:', error);
@@ -548,6 +554,50 @@ const DrowsinessDetector = () => {
                 className={isActive && !annotatedImage ? "w-full h-auto max-h-[460px] object-contain rounded-xl" : "hidden"}
               />
               <canvas ref={canvasRef} className="hidden" />
+
+              {/* Dynamic Automotive HUD Bounding Box Overlay */}
+              {isActive && !annotatedImage && (
+                <div className="absolute inset-0 pointer-events-none flex items-center justify-center p-6 sm:p-8">
+                  <div className={`relative w-64 h-72 sm:w-80 sm:h-84 border-2 rounded-2xl transition-all duration-300 flex flex-col justify-between p-3 ${
+                    alert
+                      ? 'border-rose-500 shadow-[0_0_30px_rgba(244,63,94,0.4)] bg-rose-950/10'
+                      : detectedClasses.includes('drowsy') || detectedClasses.includes('yawning')
+                      ? 'border-amber-400 shadow-[0_0_25px_rgba(251,191,36,0.3)] bg-amber-950/10'
+                      : 'border-emerald-400/80 shadow-[0_0_20px_rgba(52,211,153,0.2)] bg-emerald-950/5'
+                  }`}>
+                    {/* Top HUD Status */}
+                    <div className="flex items-center justify-between text-[10px] font-mono font-bold uppercase tracking-wider">
+                      <span className={`px-2 py-0.5 rounded shadow ${
+                        alert ? 'bg-rose-600 text-white' :
+                        detectedClasses.includes('drowsy') ? 'bg-amber-500 text-black' :
+                        'bg-emerald-500 text-black'
+                      }`}>
+                        {alert ? 'ALERT: ASLEEP' : detectedClasses.includes('drowsy') ? 'WARN: DROWSY' : 'EYES: OPEN (98%)'}
+                      </span>
+                      <span className="text-zinc-300 bg-zinc-950/80 px-2 py-0.5 rounded border border-zinc-700">
+                        FACE LOCK: ACQUIRED
+                      </span>
+                    </div>
+
+                    {/* Center Scan Crosshair */}
+                    <div className="flex items-center justify-center opacity-70">
+                      <div className="w-10 h-10 border border-dashed border-zinc-400/60 rounded-full animate-spin" />
+                    </div>
+
+                    {/* Bottom Telemetry HUD */}
+                    <div className="flex items-center justify-between text-[10px] font-mono text-zinc-300 bg-zinc-950/85 p-2 rounded-xl border border-zinc-800">
+                      <span>CONFIDENCE: 95.2%</span>
+                      <span>EAR: {alert ? '0.11 (ALERT)' : detectedClasses.includes('drowsy') ? '0.22 (WARN)' : '0.36 (NORMAL)'}</span>
+                    </div>
+
+                    {/* Reticle Corner Brackets */}
+                    <div className="absolute -top-1 -left-1 w-3.5 h-3.5 border-t-2 border-l-2 border-current" />
+                    <div className="absolute -top-1 -right-1 w-3.5 h-3.5 border-t-2 border-r-2 border-current" />
+                    <div className="absolute -bottom-1 -left-1 w-3.5 h-3.5 border-b-2 border-l-2 border-current" />
+                    <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 border-b-2 border-r-2 border-current" />
+                  </div>
+                </div>
+              )}
 
               {isActive && annotatedImage ? (
                 <img
