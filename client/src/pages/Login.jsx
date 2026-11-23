@@ -14,26 +14,8 @@ function Login() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [logoClicks, setLogoClicks] = useState(0);
 
   const navigate = useNavigate();
-
-  const handleLogoSecretClick = () => {
-    const newCount = logoClicks + 1;
-    if (newCount >= 3) {
-      const devDriver = {
-        id: 'driver-001',
-        fullName: 'Sri Charan',
-        email: 'sricharan@roadsense.ai',
-        carModel: 'Tesla Model 3'
-      };
-      login(devDriver, 'dev_bypass_token_' + Date.now());
-      navigate('/dashboard');
-    } else {
-      setLogoClicks(newCount);
-      setTimeout(() => setLogoClicks(0), 2000);
-    }
-  };
 
   const handleChange = (e) => {
     setFormData({
@@ -100,19 +82,6 @@ function Login() {
     setLoading(true);
     setError('');
 
-    // Developer / Demo bypass
-    if (formData.email?.toLowerCase().includes('demo') || formData.email?.toLowerCase().includes('roadsense.ai') || formData.password === 'bypass') {
-      const devDriver = {
-        id: 'driver-001',
-        fullName: 'Sri Charan',
-        email: formData.email || 'sricharan@roadsense.ai',
-        carModel: 'Tesla Model 3'
-      };
-      login(devDriver, 'dev_bypass_token_' + Date.now());
-      navigate("/dashboard");
-      return;
-    }
-
     try {
       const response = await fetch(`${BACKEND_URL}/loginuser`, {
         method: "POST",
@@ -174,9 +143,7 @@ function Login() {
         {/* Brand */}
         <div className="text-center mb-8">
           <div
-            onClick={handleLogoSecretClick}
-            title="RoadSense"
-            className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-white mb-4 shadow-xl cursor-pointer select-none transition-all active:scale-95"
+            className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 text-white mb-4 shadow-xl select-none"
           >
             <span className="font-bold text-xl font-mono">RS</span>
           </div>
