@@ -60,7 +60,18 @@ function Login() {
         })
       });
 
-      const data = await response.json();
+      const text = await response.text();
+      let data = {};
+      try {
+        data = JSON.parse(text);
+      } catch (parseErr) {
+        if (response.status === 403 || response.status === 502 || response.status === 503) {
+          setError("Render backend is starting up. Please wait 30-40 seconds and try again.");
+          return;
+        }
+        setError("Server response error. Please verify your connection.");
+        return;
+      }
 
       if (response.ok && data.success) {
         login(data.user, data.token);
@@ -114,7 +125,18 @@ function Login() {
         })
       });
 
-      const data = await response.json();
+      const text = await response.text();
+      let data = {};
+      try {
+        data = JSON.parse(text);
+      } catch (parseErr) {
+        if (response.status === 403 || response.status === 502 || response.status === 503) {
+          setError("Render backend is starting up. Please wait 30-40 seconds and try again.");
+          return;
+        }
+        setError("Server response error. Please verify your connection.");
+        return;
+      }
 
       if (response.ok && data.success) {
         login(data.user, data.token);

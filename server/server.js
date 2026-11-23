@@ -198,7 +198,8 @@ app.post("/loginuser",async (req,res)=>{
           user:{
             id:user._id,
             email: user.email,
-            fullName: user.fullName
+            fullName: user.fullName,
+            carModel: user.carModel
           }
         });
       }
