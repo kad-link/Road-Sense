@@ -75,7 +75,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 connectDB();
 
 const JWT_SECRET = process.env.JWT_SECRET;
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 
 app.get("/", (req,res)=>{

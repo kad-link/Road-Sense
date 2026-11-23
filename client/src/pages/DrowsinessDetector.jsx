@@ -555,12 +555,6 @@ const DrowsinessDetector = () => {
                   </div>
                 </div>
               )}
-
-              {/* Corner Reticle Markers (Automotive HUD) */}
-              <div className="absolute top-4 left-4 w-4 h-4 border-t-2 border-l-2 border-zinc-700 pointer-events-none" />
-              <div className="absolute top-4 right-4 w-4 h-4 border-t-2 border-r-2 border-zinc-700 pointer-events-none" />
-              <div className="absolute bottom-4 left-4 w-4 h-4 border-b-2 border-l-2 border-zinc-700 pointer-events-none" />
-              <div className="absolute bottom-4 right-4 w-4 h-4 border-b-2 border-r-2 border-zinc-700 pointer-events-none" />
             </div>
 
             {/* Bottom Controls Bar */}
